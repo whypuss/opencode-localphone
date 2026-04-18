@@ -1,6 +1,9 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { settings, getSettings } from '../stores/settings'
+
+const router = useRouter()
 
 const s = getSettings()
 const saving = ref(false)
@@ -42,6 +45,11 @@ function clearAllData() {
 </script>
 <template>
   <div class="max-w-2xl mx-auto w-full px-6 py-8">
+    <!-- Back button -->
+    <button @click="router.push('/')" class="mb-4 flex items-center gap-1 text-sm font-medium" style="color:#F97316">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+      Back
+    </button>
     <h1 class="text-2xl font-bold text-primary mb-8">Settings</h1>
 
     <!-- Appearance -->
