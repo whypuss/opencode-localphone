@@ -45,7 +45,7 @@ export interface ReviewLog {
 export interface Source {
   id?: number;
   bookId: number;
-  type: "pdf" | "youtube" | "web" | "text";
+  type: "pdf" | "youtube" | "web" | "text" | "csv" | "docx";
   url: string | null;
   title: string;
   content: string;

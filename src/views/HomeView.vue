@@ -138,7 +138,7 @@
 
             <!-- Drop zone -->
             <div class="p-4" style="border-bottom:1px solid #F3F4F6">
-              <input ref="fileInput" type="file" accept=".pdf" class="hidden" @change="handleFileUpload" />
+              <input ref="fileInput" type="file" accept=".pdf,.txt,.csv,.doc,.docx" class="hidden" @change="handleFileUpload" />
               <div
                 @click="triggerFileUpload"
                 @dragover.prevent="isDragging = true"
@@ -152,7 +152,7 @@
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                 </svg>
-                Drop PDF here or tap to upload
+                Drop PDF, TXT, CSV, DOC, DOCX here or tap to upload
               </div>
             </div>
 
@@ -887,22 +887,25 @@ function triggerFileUpload() { fileInput.value?.click() }
 async function handleFileUpload(e) {
   const file = e.target.files?.[0]
   if (!file) return
-  await savePdfFile(file)
+  await saveFile(file)
   e.target.value = ''
 }
 
 async function handleFileDrop(e) {
   isDragging.value = false
   const file = e.dataTransfer?.files?.[0]
-  if (!file?.name.endsWith('.pdf')) return
-  await savePdfFile(file)
+  if (!file) return
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!['pdf', 'txt', 'csv', 'doc', 'docx'].includes(ext)) return
+  await saveFile(file)
 }
 
-async function savePdfFile(file) {
+async function saveFile(file) {
   if (!selectedBook.value?.id) return
   uploadProgress.value = 0
   const url = URL.createObjectURL(file)
-  // Simulate progress for blob URL, then extract text
+  const ext = file.name.split('.').pop()?.toLowerCase()
+
   const progressInterval = setInterval(() => {
     if (uploadProgress.value < 90) {
       uploadProgress.value += Math.random() * 20
@@ -912,15 +915,19 @@ async function savePdfFile(file) {
 
   let textContent = ''
   try {
-    textContent = await extractPdfText(file)
-  } catch {
-    textContent = `[PDF content from ${file.name}]`
+    if (ext === 'pdf') textContent = await extractPdfText(file)
+    else if (ext === 'txt') textContent = await extractTxtCsvText(file)
+    else if (ext === 'csv') textContent = await extractCsvText(file)
+    else if (ext === 'docx' || ext === 'doc') textContent = await extractDocxText(file)
+  } catch (e) {
+    textContent = `[Content from ${file.name}]`
   }
 
   clearInterval(progressInterval)
   uploadProgress.value = 100
 
-  const src = await addSource(selectedBook.value.id, 'pdf', url, file.name, textContent)
+  const type = (ext === 'docx' || ext === 'doc') ? 'docx' : (ext === 'csv' ? 'csv' : ext === 'txt' ? 'text' : ext)
+  const src = await addSource(selectedBook.value.id, type, url, file.name, textContent)
   sources.value = [src, ...sources.value]
   setTimeout(() => { uploadProgress.value = null }, 500)
 }
@@ -949,6 +956,38 @@ async function extractPdfText(file) {
     text += content.items.map(item => item.str).join(' ') + '\n'
   }
   return text.substring(0, 5000) // cap at 5000 chars
+}
+
+async function extractTxtCsvText(file: File): Promise<string> {
+  const text = await file.text()
+  return text.substring(0, 5000)
+}
+
+async function extractCsvText(file: File): Promise<string> {
+  const text = await file.text()
+  // Convert CSV to readable text (simple: remove commas, show rows as lines)
+  const lines = text.split('\n').filter(l => l.trim())
+  return lines.map(line => {
+    const cells = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''))
+    return cells.join(' | ')
+  }).join('\n').substring(0, 5000)
+}
+
+async function extractDocxText(file: File): Promise<string> {
+  // Load mammoth.js from CDN
+  if (!(window as any).mammoth) {
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'
+      script.onload = () => resolve()
+      script.onerror = reject
+      document.head.appendChild(script)
+    })
+  }
+  const mammoth = (window as any).mammoth
+  const arrayBuffer = await file.arrayBuffer()
+  const result = await mammoth.extractRawText({ arrayBuffer })
+  return result.value.substring(0, 5000)
 }
 
 async function addLink() {
