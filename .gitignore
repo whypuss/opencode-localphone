@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+android/.gradle/
+android/app/build/
+android/build/
+
+# Generated web assets (these are built from source, not source files)
+android/app/src/main/assets/public/
+
+# Cordova/Capacitor build artifacts
+android/capacova-android-plugins/build/
+android/capacitor-cordova-android-plugins/build/
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
