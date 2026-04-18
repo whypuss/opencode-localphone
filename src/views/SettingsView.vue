@@ -15,15 +15,19 @@ const providerOptions = [
 ]
 
 const modelOptions = [
-  // OpenRouter models (use full OpenRouter model ID)
+  // OpenRouter models (free tier)
+  { value: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 3 Super 120B (free)' },
+  { value: 'google/gemma-3-27b-it:free', label: 'Gemma 3 27B (free)' },
+  { value: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B (free)' },
+  { value: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (free)' },
+  { value: 'qwen/qwen3-coder:free', label: 'Qwen 3 Coder (free)' },
+  { value: 'minimax/minimax-m2.5:free', label: 'MiniMax M2.5 (free)' },
+  { value: 'google/gemma-3-12b-it:free', label: 'Gemma 3 12B (free)' },
+  // OpenRouter models (paid)
   { value: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku (fast)' },
-  { value: 'anthropic/claude-3-sonnet', label: 'Claude 3 Sonnet' },
   { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini (fast)' },
-  { value: 'google/gemini-pro', label: 'Gemini Pro' },
-  { value: 'mistralai/mistral-7b-instruct', label: 'Mistral 7B (free tier)' },
-  // HuggingFace models (Inference API)
-  { value: 'Qwen/Qwen2.5-7B-Instruct', label: 'Qwen 2.5 7B (free)' },
-  { value: 'meta-llama/Llama-3-8B-Instruct', label: 'Llama 3 8B' },
+  // HuggingFace models (Inference API - free)
+  { value: 'Qwen/Qwen2.5-7B-Instruct', label: 'Qwen 2.5 7B (HuggingFace free)' },
 ]
 
 function saveApiKey() {

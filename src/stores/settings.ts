@@ -16,7 +16,7 @@ function loadSettings(): AppSettings {
   } catch {}
   return {
     openrouterApiKey: '',
-    aiModel: 'openrouter/anthropic/claude-3-haiku',
+    aiModel: 'nvidia/nemotron-3-super-120b-a12b:free',
     aiProvider: 'openrouter',
     hfToken: '',
   }
