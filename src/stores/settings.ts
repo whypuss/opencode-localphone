@@ -2,8 +2,10 @@ import { reactive, watch } from 'vue'
 
 export interface AppSettings {
   openrouterApiKey: string
-  aiModel: string  // e.g. "openrouter/anthropic/claude-3-haiku" or "huggingface/..."
-  aiProvider: 'openrouter' | 'huggingface'
+  googleApiKey: string
+  nvidiaApiKey: string
+  aiModel: string
+  aiProvider: 'openrouter' | 'huggingface' | 'google' | 'nvidia'
   hfToken: string
 }
 
@@ -16,7 +18,9 @@ function loadSettings(): AppSettings {
   } catch {}
   return {
     openrouterApiKey: '',
-    aiModel: 'nvidia/nemotron-3-super-120b-a12b:free',
+    googleApiKey: '',
+    nvidiaApiKey: '',
+    aiModel: 'moonshotai/kimi-k2.5',
     aiProvider: 'openrouter',
     hfToken: '',
   }

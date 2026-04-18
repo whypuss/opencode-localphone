@@ -12,22 +12,31 @@ const saved = ref(false)
 const providerOptions = [
   { value: 'openrouter', label: 'OpenRouter' },
   { value: 'huggingface', label: 'HuggingFace' },
+  { value: 'google', label: 'Google AI' },
+  { value: 'nvidia', label: 'NVIDIA' },
 ]
 
 const modelOptions = [
   // OpenRouter models (free tier)
-  { value: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 3 Super 120B (free)' },
-  { value: 'google/gemma-3-27b-it:free', label: 'Gemma 3 27B (free)' },
-  { value: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B (free)' },
-  { value: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (free)' },
-  { value: 'qwen/qwen3-coder:free', label: 'Qwen 3 Coder (free)' },
+  { value: 'moonshotai/kimi-k2.5', label: 'Kimi K2.5 (free)' },
   { value: 'minimax/minimax-m2.5:free', label: 'MiniMax M2.5 (free)' },
+  { value: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 3 Super 120B (free)' },
+  { value: 'qwen/qwen3-coder:free', label: 'Qwen 3 Coder (free)' },
+  { value: 'google/gemma-3-27b-it:free', label: 'Gemma 3 27B (free)' },
+  { value: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (free)' },
   { value: 'google/gemma-3-12b-it:free', label: 'Gemma 3 12B (free)' },
   // OpenRouter models (paid)
   { value: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku (fast)' },
   { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini (fast)' },
   // HuggingFace models (Inference API - free)
   { value: 'Qwen/Qwen2.5-7B-Instruct', label: 'Qwen 2.5 7B (HuggingFace free)' },
+  // Google AI models
+  { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Google)' },
+  { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash (Google)' },
+  { value: 'gemini-pro', label: 'Gemini Pro (Google)' },
+  // NVIDIA NIM models
+  { value: 'nvidia/llama-3.3-nemotron-70b-instruct', label: 'Llama 3.3 Nemotron 70B (NVIDIA)' },
+  { value: 'nvidia/nemotron-3-super-120b-a12b', label: 'Nemotron 3 Super 120B (NVIDIA)' },
 ]
 
 function saveApiKey() {
@@ -143,19 +152,54 @@ function clearAllData() {
         </div>
         <!-- API Key input -->
         <div class="px-5 py-4" style="border-bottom:1px solid #F3F4F6">
-          <div class="text-xs font-semibold mb-2" style="color:#374151">
-            {{ s.aiProvider === 'openrouter' ? 'OpenRouter API Key' : 'HuggingFace Token' }}
-          </div>
-          <input
-            v-model="s.openrouterApiKey"
-            :type="s.aiProvider === 'openrouter' ? 'password' : 'text'"
-            :placeholder="s.aiProvider === 'openrouter' ? 'sk-or-v1-...' : 'hf_...'"
-            class="w-full px-4 py-2.5 rounded-xl text-sm outline-none border bg-white focus:border-orange-400 transition-colors"
-            style="color:#111827; border-color:#E5E7EB"
-          />
-          <div class="text-xs mt-1.5" style="color:#9CA3AF">
-            Get free key: {{ s.aiProvider === 'openrouter' ? 'openrouter.ai/keys' : 'huggingface.co/settings/tokens' }}
-          </div>
+          <!-- OpenRouter key -->
+          <template v-if="s.aiProvider === 'openrouter'">
+            <div class="text-xs font-semibold mb-2" style="color:#374151">OpenRouter API Key</div>
+            <input
+              v-model="s.openrouterApiKey"
+              type="password"
+              placeholder="sk-or-v1-..."
+              class="w-full px-4 py-2.5 rounded-xl text-sm outline-none border bg-white focus:border-orange-400 transition-colors"
+              style="color:#111827; border-color:#E5E7EB"
+            />
+            <div class="text-xs mt-1.5" style="color:#9CA3AF">Get free key: openrouter.ai/keys</div>
+          </template>
+          <!-- HuggingFace key -->
+          <template v-else-if="s.aiProvider === 'huggingface'">
+            <div class="text-xs font-semibold mb-2" style="color:#374151">HuggingFace Token</div>
+            <input
+              v-model="s.hfToken"
+              type="text"
+              placeholder="hf_..."
+              class="w-full px-4 py-2.5 rounded-xl text-sm outline-none border bg-white focus:border-orange-400 transition-colors"
+              style="color:#111827; border-color:#E5E7EB"
+            />
+            <div class="text-xs mt-1.5" style="color:#9CA3AF">Get token: huggingface.co/settings/tokens</div>
+          </template>
+          <!-- Google AI key -->
+          <template v-else-if="s.aiProvider === 'google'">
+            <div class="text-xs font-semibold mb-2" style="color:#374151">Google AI API Key</div>
+            <input
+              v-model="s.googleApiKey"
+              type="password"
+              placeholder="AIzaSy..."
+              class="w-full px-4 py-2.5 rounded-xl text-sm outline-none border bg-white focus:border-orange-400 transition-colors"
+              style="color:#111827; border-color:#E5E7EB"
+            />
+            <div class="text-xs mt-1.5" style="color:#9CA3AF">Get key: aistudio.google.com/app/apikey</div>
+          </template>
+          <!-- NVIDIA key -->
+          <template v-else-if="s.aiProvider === 'nvidia'">
+            <div class="text-xs font-semibold mb-2" style="color:#374151">NVIDIA API Key</div>
+            <input
+              v-model="s.nvidiaApiKey"
+              type="password"
+              placeholder="nvapi-..."
+              class="w-full px-4 py-2.5 rounded-xl text-sm outline-none border bg-white focus:border-orange-400 transition-colors"
+              style="color:#111827; border-color:#E5E7EB"
+            />
+            <div class="text-xs mt-1.5" style="color:#9CA3AF">Get key: ngc.nvidia.com/setup/api-key</div>
+          </template>
         </div>
         <!-- Model selector -->
         <div class="px-5 py-4">

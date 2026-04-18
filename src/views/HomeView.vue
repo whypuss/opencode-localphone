@@ -1082,14 +1082,12 @@ function openStudio(type) {
 // ── AI API call ────────────────────────────────────────
 async function callAI(systemPrompt: string, userPrompt: string): Promise<string> {
   const s = getSettings()
-  const apiKey = s.openrouterApiKey
-  if (!apiKey) throw new Error('No API key configured. Go to Settings → AI API to add your key.')
-
-  const model = s.aiModel || 'openrouter/anthropic/claude-3-haiku'
   const provider = s.aiProvider || 'openrouter'
 
   if (provider === 'huggingface') {
-    // HuggingFace Inference API
+    const apiKey = s.hfToken
+    if (!apiKey) throw new Error('No HuggingFace token. Go to Settings → AI API.')
+    const model = s.aiModel || 'Qwen/Qwen2.5-7B-Instruct'
     const url = `https://api-inference.huggingface.co/models/${model.replace('huggingface/', '')}`
     const response = await fetch(url, {
       method: 'POST',
@@ -1110,8 +1108,55 @@ async function callAI(systemPrompt: string, userPrompt: string): Promise<string>
     if (Array.isArray(data) && data[0]?.generated_text) return data[0].generated_text
     if (typeof data === 'string') return data
     return JSON.stringify(data)
+  } else if (provider === 'google') {
+    const apiKey = s.googleApiKey
+    if (!apiKey) throw new Error('No Google AI API key. Go to Settings → AI API.')
+    const model = s.aiModel || 'gemini-2.0-flash'
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+        generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+      }),
+    })
+    if (!response.ok) {
+      const err = await response.text()
+      throw new Error(`Google AI error ${response.status}: ${err}`)
+    }
+    const data = await response.json()
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  } else if (provider === 'nvidia') {
+    const apiKey = s.nvidiaApiKey
+    if (!apiKey) throw new Error('No NVIDIA API key. Go to Settings → AI API.')
+    const model = s.aiModel || 'nvidia/llama-3.3-nemotron-70b-instruct'
+    const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: model.replace('nvidia/', ''),
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 1024,
+        temperature: 0.7,
+      }),
+    })
+    if (!response.ok) {
+      const err = await response.text()
+      throw new Error(`NVIDIA API error ${response.status}: ${err}`)
+    }
+    const data = await response.json()
+    return data.choices?.[0]?.message?.content || ''
   } else {
-    // OpenRouter
+    // OpenRouter (default)
+    const apiKey = s.openrouterApiKey
+    if (!apiKey) throw new Error('No OpenRouter API key. Go to Settings → AI API.')
+    const model = s.aiModel || 'moonshotai/kimi-k2.5'
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -1121,7 +1166,7 @@ async function callAI(systemPrompt: string, userPrompt: string): Promise<string>
         'X-Title': 'OpenLearn',
       },
       body: JSON.stringify({
-        model: model.replace('openrouter/', ''),
+        model: model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
