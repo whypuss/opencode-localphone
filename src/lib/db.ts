@@ -228,7 +228,9 @@ export async function getBooksForDeck(deckId: number): Promise<Book[]> {
 // ─── Source helpers ────────────────────────────────────────────────────────────
 
 export async function addSource(bookId: number, type: Source["type"], url: string | null, title: string, content: string): Promise<Source> {
-  return db.sources.add({ bookId, type, url, title, content, createdAt: new Date() } as Source);
+  const id = await db.sources.add({ bookId, type, url, title, content, createdAt: new Date() } as Source);
+  // Dexie add() returns the key (ID), not the object — must fetch it back
+  return (await db.sources.get(id)) as Source;
 }
 
 export async function listSources(): Promise<Source[]> {
