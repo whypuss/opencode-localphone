@@ -996,9 +996,62 @@ async function addLink() {
   if (!url.startsWith('http')) url = 'https://' + url
   const type = /youtube\.com|youtu\.be/.test(url) ? 'youtube' : 'web'
   const title = url.length > 50 ? url.substring(0, 47) + '...' : url
-  const src = await addSource(selectedBook.value.id, type, url, title, `[Web content from ${url}]`)
+
+  uploadProgress.value = 0
+  const progressInterval = setInterval(() => {
+    if (uploadProgress.value < 80) uploadProgress.value += 10
+  }, 100)
+
+  let content = ''
+  try {
+    if (type === 'youtube') {
+      content = `[YouTube video: ${url}]`
+    } else if (url.includes('docs.google.com')) {
+      content = await fetchGoogleDoc(url)
+    } else {
+      content = await fetchUrlContent(url)
+    }
+  } catch (e) {
+    content = `[Content from ${url}]`
+  }
+
+  clearInterval(progressInterval)
+  uploadProgress.value = 100
+
+  const src = await addSource(selectedBook.value.id, type, url, title, content)
   sources.value = [src, ...sources.value]
   linkInput.value = ''
+  setTimeout(() => { uploadProgress.value = null }, 500)
+}
+
+async function fetchGoogleDoc(url: string): Promise<string> {
+  // Google Docs export: docs.google.com/document/d/ID/export?format=txt
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/)
+  if (!match) throw new Error('Invalid Google Doc URL')
+  const docId = match[1]
+  const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=txt&分配的分享ID=explicit`
+  const resp = await fetch(`https://corsproxy.io/?${encodeURIComponent(exportUrl)}`)
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+  return await resp.text()
+}
+
+async function fetchUrlContent(url: string): Promise<string> {
+  const resp = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`)
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+  const html = await resp.text()
+  // Extract text from HTML
+  const text = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return text.substring(0, 5000)
 }
 
 async function removeSource(id) {
